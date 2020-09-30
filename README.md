@@ -14,6 +14,7 @@ SO THAT I can plan a trip accordingly
 ```
 
 ## What is done
+* If the city name is not found, there will be an alert box, the user then simply enter the city again
 * Given a weather dashboard with form inputs
 * Current and future conditions for searched cities are presented and added to search history
 * City name, the date, an icon representation of weather conditions, the temperature, the humidity, the wind speed, and the UV index are presented when viewing current weather
