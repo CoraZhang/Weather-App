@@ -1,6 +1,7 @@
 const APIKey = "60f9be3ac9fd332094230a7eb9bb1481";
 // Personal API key
 const lsKey = "weatherSearches"
+    // local storage key
 const searchesDiv = $("#searches");
 const searchInput = $("#searchInput");
 const searchButton = $("#searchBtn");
@@ -14,10 +15,15 @@ var addedCity = newCity();
 const metricUnits = { deg: "C", speed: "KPH" };
 const impUnits = { deg: "F", speed: "MPH" };
 var units = metricUnits;
-
+// functions help make things eaiser
 function newCity(city, country) {
     return { city: city, country: country };
 }
+
+function correctCase(str) {
+    return str.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+}
+init();
 
 function init() {
 
@@ -27,7 +33,7 @@ function init() {
     });
 
 
-    buildSearchHistory();
+    displaySearchHistory();
     // get weather if there is nothing in storage
     if (storedSearches != null) {
         getWeather(storedSearches[0]);
@@ -44,7 +50,7 @@ function init() {
     clearBtn.on("click", clearSearches); // clear everything when clicking the clear button
 }
 
-function buildSearchHistory() {
+function displaySearchHistory() {
 
     searchesDiv.empty();
     // empty searchesDiv variable
@@ -86,14 +92,15 @@ function getWeather(city) {
         queryURLForecast = "https:////api.openweathermap.org/data/2.5/forecast?q=" + city.city + "," + city.country + "&units=metric&appid=" + APIKey;
     }
 
-    performAPIGETCall(queryURLCurrent, buildCurrentWeather);
-    performAPIGETCall(queryURLForecast, buildForecastWeather);
+    performAPIGETCall(queryURLCurrent, displayCurrentWeather);
+    performAPIGETCall(queryURLForecast, displayForecastWeather);
 }
 
-function buildCurrentWeather(data) {
-    //console.log(data);
+
+function displayCurrentWeather(data) {
+    console.log(data);
     if (data != null) {
-        console.log(units, metricUnits, data.wind.speed);
+        console.log(units, data.wind.speed, data.main.temp, data.main.humidity);
         currentWeatherDiv.empty();
         currentWeatherDiv.append(
             // first letter upper case, other lower case for cities, all upper case for countries
@@ -104,13 +111,21 @@ function buildCurrentWeather(data) {
                 .attr("data-toggle", "tooltip")
                 .attr("data-placement", "right")
                 .attr("title", data.weather[0].description)
-                .tooltip()), $("<p>").text("Temperature: " +
-                Math.round(data.main.temp) + "°" + units.deg), $("<p>").text("Humidity: " +
-                data.main.humidity + "%"), $("<p>").text("Wind Speed: " +
+                .tooltip()),
+            $("<p>").text("Temperature: " +
+                Math.round(data.main.temp) + "°" + units.deg),
+            $("<p>").text("Humidity: " +
+                data.main.humidity + "%"),
+            $("<p>").text("Feels Like:" + " " + data.main.feels_like + "°"),
+            $("<p>").text("Wind Speed: " +
                 (Math.round((units === metricUnits) ? (data.wind.speed * 3.6) : data.wind.speed)) + " " +
-                units.speed), $("<p>").text("UV Index: ").append($("<div>").attr("id", "UVIndex"))
-        );
+                units.speed),
+            $("<p>").text("UV Index: ").append($("<div>").attr("id", "UVIndex"),
 
+
+            )
+        );
+        // convert units
         let UVqueryURL = "https://api.openweathermap.org/data/2.5/uvi?appid=" + APIKey + "&lat=" + data.coord.lat + "&lon=" + data.coord.lon;
 
         performAPIGETCall(UVqueryURL, buildUV);
@@ -139,27 +154,28 @@ function buildUV(data) {
 
         //determine severity of UV Index for color coding
         if (UVIndex < 2) {
-            UVbg = "green";
+            UVbg = "rgb(60,179,113)";
             textColor = "white";
             severity = "Low";
-            borderColor = "rgb(16, 129, 16)";
+            borderColor = "rgb(60,179,113)";
         } else if (UVIndex < 6) {
-            UVbg = "yellow";
+            UVbg = "rgb(189,183,107)";
             severity = "Moderate";
-            borderColor = "rgb(245, 245, 56)";
+            borderColor = "rgb(189,183,107)";
         } else if (UVIndex < 8) {
-            UVbg = "orange";
+            UVbg = "rgb(255,140,0)";
             severity = "High";
-            borderColor = "rgb(255, 184, 51)";
+            borderColor = "rgb(255,140,0)";
         } else if (UVIndex < 11) {
-            UVbg = "red";
+
+            UVbg = "rgb(205,92,92)";
             textColor = "white";
             severity = "Very high";
-            borderColor = "rgb(255, 54, 54)";
+            borderColor = "rgb(205,92,92)";
         } else {
-            UVbg = "violet";
+            UVbg = "rgb(219,112,147)";
             severity = "Extreme";
-            borderColor = "rgb(236, 151, 236)";
+            borderColor = "rgb(219,112,147)";
         }
         UVDiv.attr("title", severity)
             .attr("data-placement", "right")
@@ -176,7 +192,7 @@ function buildUV(data) {
     }
 }
 
-function buildForecastWeather(data) {
+function displayForecastWeather(data) {
     if (data != null) {
 
         forecastDiv.empty();
@@ -211,6 +227,7 @@ function parseDailyData(data) {
         });
     }
     return dailyData;
+
 }
 
 function buildForecastCard(day) {
@@ -219,6 +236,7 @@ function buildForecastCard(day) {
     dayCard.append(
         $("<label>").text(moment.unix(parseInt(day.date)).format('dddd')),
         $("<label>").text(moment.unix(day.date).format("MMM Do YYYY")),
+        // add image icon for day card for diff city and each day
         $("<img>").attr("src", "https://openweathermap.org/img/wn/" + day.icon + ".png")
         .attr("data-toggle", "tooltip")
         .attr("data-placement", "right")
@@ -232,7 +250,7 @@ function buildForecastCard(day) {
 }
 
 function addNewSearch(city) {
-    //console.log(city, storedSearches);
+    console.log(city, storedSearches);
     if (storedSearches == null) {
         storedSearches = [];
     }
@@ -241,7 +259,7 @@ function addNewSearch(city) {
 
     localStorage.setItem(lsKey, JSON.stringify(storedSearches));
 
-    buildSearchHistory();
+    displaySearchHistory();
 }
 
 function clearSearches() {
@@ -250,19 +268,13 @@ function clearSearches() {
     searchesDiv.empty();
     storedSearches = null;
 }
-//get started
-init();
-
-function correctCase(str) {
-    return str.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-}
 
 function performAPIGETCall(queryURL, callbackFunction) {
     $.ajax({
         url: queryURL,
         method: "GET",
         error: function() {
-            alert("The city name is not valid!");
+            alert("The city name is not valid! Please enter again.");
         }
     }).then(function(response) {
         callbackFunction(response);
