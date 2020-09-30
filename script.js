@@ -128,7 +128,7 @@ function displayCurrentWeather(data) {
         // convert units
         let UVqueryURL = "https://api.openweathermap.org/data/2.5/uvi?appid=" + APIKey + "&lat=" + data.coord.lat + "&lon=" + data.coord.lon;
 
-        performAPIGETCall(UVqueryURL, buildUV);
+        performAPIGETCall(UVqueryURL, displayUV);
 
         if (addedCity.country == null) {
             addedCity.country = data.sys.country;
@@ -142,7 +142,7 @@ function displayCurrentWeather(data) {
     }
 }
 
-function buildUV(data) {
+function displayUV(data) {
     if (data != null) {
 
         let UVIndex = data.value;
@@ -203,7 +203,7 @@ function displayForecastWeather(data) {
         dailyData = parseDailyData(data);
 
         dailyData.forEach(element => {
-            dayCardContainer.append(buildForecastCard(element));
+            dayCardContainer.append(displayForecastCard(element));
         });
 
     } else {
@@ -230,7 +230,7 @@ function parseDailyData(data) {
 
 }
 
-function buildForecastCard(day) {
+function displayForecastCard(day) {
     let dayCard = $("<div>").attr("class", "dayCard col-12 col-md-5 col-lg-2");
 
     dayCard.append(
