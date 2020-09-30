@@ -25,5 +25,5 @@ SO THAT I can plan a trip accordingly
 
 The following image demonstrates the application functionality:
 
-[!alt text] (.Assets/Screen.png)
+![alt text](.Assets/Screen.png)
 
