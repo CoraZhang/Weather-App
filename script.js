@@ -1,26 +1,23 @@
 const APIKey = "60f9be3ac9fd332094230a7eb9bb1481";
 // Personal API key
-const lsKey = "weatherSearches";
+const lsKey = "weatherSearches"
 const searchesDiv = $("#searches");
 const searchInput = $("#searchInput");
 const searchButton = $("#searchBtn");
 const currentWeatherDiv = $("#currentWeather");
 const forecastDiv = $("#forecast");
 const clearBtn = $("#clear");
-//store and determine if the city needs to be added to the search history
 var storedSearches = JSON.parse(localStorage.getItem(lsKey));
 //create searchedcity object
-var addedCity = {
-        constructor(city, country) {
-            this.city = city;
-            this.country = country;
-        }
-    }
-    //unit variables
+var addedCity = newCity();
+//unit variables
 const metricUnits = { deg: "C", speed: "KPH" };
 const impUnits = { deg: "F", speed: "MPH" };
 var units = metricUnits;
 
+function newCity(city, country) {
+    return { city: city, country: country };
+}
 
 function init() {
 
@@ -28,6 +25,7 @@ function init() {
     $(function() {
         $('[data-toggle="tooltip"]').tooltip()
     });
+
 
     buildSearchHistory();
     // get weather if there is nothing in storage
@@ -42,48 +40,45 @@ function init() {
         }
     });
 
-    searchButton.on("click", searchButtonClicked);
-    // when clicking, search as well
-    clearBtn.on("click", clearSearches);
-    // clear everything when clicking the clear button
+    searchButton.on("click", searchButtonClicked); // when clicking, search as well
+    clearBtn.on("click", clearSearches); // clear everything when clicking the clear button
 }
 
 function buildSearchHistory() {
-    // empty searchesDiv variable
+
     searchesDiv.empty();
+    // empty searchesDiv variable
     // if there is data stored in local storage
     if (storedSearches != null) {
         //push each element to searchesDiv variable and add a button to each searched city
         storedSearches.forEach(element => {
             searchesDiv.append(
                 $("<button>")
-                .text(element.city.replace(/\b\w/g, l => l.toUpperCase()) + ", " + element.country.toUpperCase()) // country init in upper case
+                .text(correctCase(element.city) + ", " + element.country.toUpperCase())
                 .addClass("btn btnCitySearch")
                 .on("click", function() {
-                    getWeather(element); // get weather info from API
+                    getWeather(element);
                 })
             );
         });
     }
 }
-// When search button clicked, do: 
+
 function searchButtonClicked() {
 
     let cityVal = searchInput.val().trim(); // eliminate spaces in user's input, assign to cityVal
-    //let city = newCity(cityVal, null);
-    addedCity.city = cityVal;
-    addedCity.country = "";
-    getWeather(addedCity);
+    let city = newCity(cityVal, null);
+    getWeather(city);
     //clear the value once the search is activated
     searchInput.val("");
 }
-
+// call
 function getWeather(city) {
-    //addedCity = city;
+    addedCity = city;
     let queryURLCurrent = "";
     let queryURLForecast = "";
 
-    if (city.country == "") {
+    if (city.country == null) {
         queryURLCurrent = "https://api.openweathermap.org/data/2.5/weather?q=" + city.city + "&units=metric&appid=" + APIKey;
         queryURLForecast = "https://api.openweathermap.org/data/2.5/forecast?q=" + city.city + "&units=metric&appid=" + APIKey;
     } else {
@@ -91,28 +86,27 @@ function getWeather(city) {
         queryURLForecast = "https:////api.openweathermap.org/data/2.5/forecast?q=" + city.city + "," + city.country + "&units=metric&appid=" + APIKey;
     }
 
-    //console.log(queryURLCurrent);
     performAPIGETCall(queryURLCurrent, buildCurrentWeather);
     performAPIGETCall(queryURLForecast, buildForecastWeather);
 }
 
 function buildCurrentWeather(data) {
-    //console.log(data.cod);
+    //console.log(data);
     if (data != null) {
         console.log(units, metricUnits, data.wind.speed);
         currentWeatherDiv.empty();
         currentWeatherDiv.append(
             // first letter upper case, other lower case for cities, all upper case for countries
-            $("<h3>").text(data.name.toLowerCase().replace(/\b\w/g, l => l.toUpperCase()) + ", " +
+            $("<h3>").text(correctCase(data.name) + ", " +
                 data.sys.country.toUpperCase()), $("<h4>").text(moment.unix(data.dt).format("dddd, MMM Do YYYY"))
             .append($("<img>").attr("src", "https://openweathermap.org/img/wn/" + data.weather[0].icon + "@2x.png")
                 .addClass("currentWeatherImg")
                 .attr("data-toggle", "tooltip")
                 .attr("data-placement", "right")
                 .attr("title", data.weather[0].description)
-                .tooltip()), $("<p>").text("Temperature: " + Math.round(data.main.temp) + "°" + units.deg),
-            $("<p>").text("Humidity: " + data.main.humidity + "%"),
-            $("<p>").text("Wind Speed: " +
+                .tooltip()), $("<p>").text("Temperature: " +
+                Math.round(data.main.temp) + "°" + units.deg), $("<p>").text("Humidity: " +
+                data.main.humidity + "%"), $("<p>").text("Wind Speed: " +
                 (Math.round((units === metricUnits) ? (data.wind.speed * 3.6) : data.wind.speed)) + " " +
                 units.speed), $("<p>").text("UV Index: ").append($("<div>").attr("id", "UVIndex"))
         );
@@ -121,11 +115,11 @@ function buildCurrentWeather(data) {
 
         performAPIGETCall(UVqueryURL, buildUV);
 
-        if (addedCity.country == "") {
+        if (addedCity.country == null) {
             addedCity.country = data.sys.country;
             addedCity.city = data.name;
             addNewSearch(addedCity);
-            addedCity = "";
+            addedCity = null;
         }
 
     } else {
@@ -200,7 +194,7 @@ function buildForecastWeather(data) {
         alert("Something went wrong getting forecast data, please try again");
     }
 }
-//for now arbitrarily starts at the index 5/40 of returned results as it is in 3 hour intervals
+
 function parseDailyData(data) {
 
     let dailyData = [];
@@ -238,7 +232,7 @@ function buildForecastCard(day) {
 }
 
 function addNewSearch(city) {
-
+    //console.log(city, storedSearches);
     if (storedSearches == null) {
         storedSearches = [];
     }
@@ -256,18 +250,21 @@ function clearSearches() {
     searchesDiv.empty();
     storedSearches = null;
 }
-
+//get started
 init();
+
+function correctCase(str) {
+    return str.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+}
 
 function performAPIGETCall(queryURL, callbackFunction) {
     $.ajax({
         url: queryURL,
-        success: function(response) {
-            $.get(queryURL, callbackFunction(response));
-        },
-        error: function(response) {
-            console.log("The city is not Found! ");
+        method: "GET",
+        error: function() {
+            alert("The city name is not valid!");
         }
-
+    }).then(function(response) {
+        callbackFunction(response);
     });
 }
